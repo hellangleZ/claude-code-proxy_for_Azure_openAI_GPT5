@@ -657,15 +657,24 @@ def convert_anthropic_to_litellm(anthropic_request: MessagesRequest) -> Dict[str
         "stream": anthropic_request.stream,
     }
     
-    # Handle Azure-specific parameters
+    # Handle Azure-specific parameters based on model type
     if anthropic_request.model.startswith("azure/"):
-        # Azure OpenAI uses max_completion_tokens for newer models like GPT-5
-        litellm_request["max_completion_tokens"] = max_tokens
-        logger.debug(f"Using max_completion_tokens={max_tokens} for Azure model")
+        # Extract the actual model name from azure/model-name
+        model_name = anthropic_request.model.split("/")[-1].lower()
         
-        # Azure GPT-5 only supports temperature=1 (default)
-        # Skip temperature parameter for Azure to use default
-        logger.debug(f"Skipping temperature parameter for Azure model (Azure GPT-5 only supports default temperature=1)")
+        # GPT-5 and O3 models need special handling
+        if "gpt-5" in model_name or "o3" in model_name:
+            # Newer models use max_completion_tokens and have temperature restrictions
+            litellm_request["max_completion_tokens"] = max_tokens
+            logger.debug(f"Using max_completion_tokens={max_tokens} for Azure model: {model_name}")
+            
+            # GPT-5/O3 only support temperature=1 (default), skip temperature parameter
+            logger.debug(f"Skipping temperature parameter for {model_name} (only supports default temperature=1)")
+        else:
+            # Traditional Azure models (GPT-4, GPT-4.1, etc.) use standard parameters
+            litellm_request["max_tokens"] = max_tokens
+            litellm_request["temperature"] = anthropic_request.temperature
+            logger.debug(f"Using max_tokens={max_tokens} and temperature={anthropic_request.temperature} for Azure model: {model_name}")
     else:
         # Other providers use max_tokens and can handle custom temperature
         litellm_request["max_tokens"] = max_tokens
