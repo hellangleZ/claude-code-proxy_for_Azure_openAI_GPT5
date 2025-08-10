@@ -1,3 +1,6 @@
+Fork from https://github.com/1rgs/claude-code-proxy#
+
+
 # Azure GPT-5 Compatibility Fix
 
 This fork includes fixes for Azure OpenAI GPT-5 compatibility issues.
@@ -55,3 +58,4 @@ ANTHROPIC_API_KEY="sk-ant-dummy-key-for-proxy" ANTHROPIC_BASE_URL=http://localho
 ## Original Project
 
 Based on [claude-code-proxy](https://github.com/samuelint/claude-code-proxy) with Azure GPT-5 compatibility improvements.
+
