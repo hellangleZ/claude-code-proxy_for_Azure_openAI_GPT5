@@ -654,10 +654,22 @@ def convert_anthropic_to_litellm(anthropic_request: MessagesRequest) -> Dict[str
     litellm_request = {
         "model": anthropic_request.model,  # t understands "anthropic/claude-x" format
         "messages": messages,
-        "max_tokens": max_tokens,
-        "temperature": anthropic_request.temperature,
         "stream": anthropic_request.stream,
     }
+    
+    # Handle Azure-specific parameters
+    if anthropic_request.model.startswith("azure/"):
+        # Azure OpenAI uses max_completion_tokens for newer models like GPT-5
+        litellm_request["max_completion_tokens"] = max_tokens
+        logger.debug(f"Using max_completion_tokens={max_tokens} for Azure model")
+        
+        # Azure GPT-5 only supports temperature=1 (default)
+        # Skip temperature parameter for Azure to use default
+        logger.debug(f"Skipping temperature parameter for Azure model (Azure GPT-5 only supports default temperature=1)")
+    else:
+        # Other providers use max_tokens and can handle custom temperature
+        litellm_request["max_tokens"] = max_tokens
+        litellm_request["temperature"] = anthropic_request.temperature
 
     # Add optional parameters if present
     if anthropic_request.stop_sequences:
